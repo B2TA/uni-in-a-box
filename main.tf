@@ -97,6 +97,10 @@ resource "aws_instance" "lms-instance" {
   vpc_security_group_ids      = [module.lms_security_group.id]
   key_name                    = aws_key_pair.lms.key_name
 
+  metadata_options {
+    http_tokens = "required"
+  }
+
   root_block_device {
     volume_size = 40
     volume_type = "gp3"
