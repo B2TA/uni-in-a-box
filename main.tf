@@ -96,6 +96,9 @@ resource "aws_instance" "lms-instance" {
   associate_public_ip_address = true
   vpc_security_group_ids      = [module.lms_security_group.id]
   key_name                    = aws_key_pair.lms.key_name
+  user_data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
+    install_script = filebase64("${path.module}/scripts/install-docker-caddy.sh")
+  })
 
   metadata_options {
     http_tokens = "required"
