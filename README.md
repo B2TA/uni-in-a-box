@@ -48,6 +48,9 @@ its DNS record at the instance IP:
 - [Canvas](deployment/canvas/README.md)
 - [PrairieLearn](deployment/prairielearn/README.md)
 
+> If your DNS is on Cloudflare and Caddy has HTTPS or certificate problems,
+> set the records to **DNS only** (turn off the proxy).
+
 Then run:
 
 ```bash
