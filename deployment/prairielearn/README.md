@@ -1,14 +1,11 @@
 # PrairieLearn test deployment
 
-This Compose project runs a small, single-container PrairieLearn instance for
-integration testing. PrairieLearn's PostgreSQL data is stored in a named Docker
-volume and course repositories are stored under `courses/` on the host.
+This Compose project runs a small, single-container PrairieLearn instance.
+PrairieLearn's PostgreSQL data is stored in a named Docker volume and course
+repositories are stored under `courses/` on the host.
 
-This deliberately does not mount the Docker socket or run the grader/workspace
-hosts. Standard PrairieLearn questions work, but external graders and coding
-workspaces do not. This keeps the service unprivileged and avoids the extra
-compute infrastructure that PrairieLearn recommends for those optional
-features.
+> External graders and coding workspaces don't work in this setup; standard
+> questions do.
 
 ## Configure Google OAuth
 
@@ -27,31 +24,15 @@ instances. Create a Google OAuth client before starting the service:
 
    ```bash
    cp config.example.json config.json
-   chmod 600 config.json
    openssl rand -hex 32
    openssl rand -hex 32
    ```
 
-`config.json` is ignored by Git because it contains the OAuth client secret.
 The values of `serverCanonicalHost` and `googleRedirectUrl` must use the public
 HTTPS hostname, and the callback path must remain `/pl/oauth2callback`.
 `cookieDomain` must begin with a dot; for `pl.example.com`, use
 `.pl.example.com`. Put the two different 64-character hexadecimal values from
 the `openssl` commands in `secretKey` and `databaseEncryptionKey`.
-
-The template is tuned for this small instance:
-
-- `workersCount` is `1`, instead of PrairieLearn's default of one Python
-  question-code worker per CPU. This lowers idle memory usage but queues
-  simultaneous question rendering and grading behind that one worker.
-- `postgresqlPoolSize` is capped at `10`, instead of the default maximum of
-  `100`. Connections are opened on demand, so this mainly limits memory growth
-  under concurrency rather than reducing idle memory.
-- `workspaceEnable` is `false`. External graders are also unavailable because
-  this deployment intentionally does not mount the Docker socket.
-
-Do not set `workersExecutionMode` to `disabled`: the native Python worker is
-needed for ordinary questions and elements that execute `server.py`.
 
 ## Configure GitHub access for PrairieLearn
 
@@ -68,32 +49,13 @@ in `/home/admin/.ssh/config`.
 If the key directory is elsewhere, set `PRAIRIELEARN_SSH_DIR` before running
 Compose.
 
-## Start PrairieLearn
+## Deploy PrairieLearn
 
-From this directory, start the service:
+After configuring `config.json`, deploy using the steps in the
+[main README](../../README.md#deploy).
 
-```bash
-docker compose pull
-docker compose up -d
-docker compose ps
-```
-
-The image is large, so its first download can take a few minutes. The default
-binding is `127.0.0.1:3001`; it is not exposed directly to the internet. Point
-the hostname's DNS record at the EC2 Elastic IP, then add this site to the
-host's Caddyfile:
-
-```caddyfile
-pl.example.com {
-    reverse_proxy 127.0.0.1:3001
-}
-```
-
-After reloading Caddy, verify PrairieLearn's documented health endpoint:
-
-```bash
-curl --fail https://pl.example.com/pl/webhooks/ping
-```
+On the server, the files are in `/opt/uni-in-a-box/deployment/prairielearn`,
+where the commands below should be run.
 
 ## Create the first administrator
 
@@ -143,12 +105,6 @@ View logs or update to the current `us-prod-live` image:
 docker compose logs --follow app
 docker compose pull
 docker compose up -d
-```
-
-Stop the service while preserving data:
-
-```bash
-docker compose down
 ```
 
 To discard the database permanently, including users and course-instance data:

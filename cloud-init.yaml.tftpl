@@ -1,0 +1,11 @@
+#cloud-config
+
+write_files:
+  - path: /usr/local/sbin/install-docker-caddy
+    owner: root:root
+    permissions: "0755"
+    encoding: b64
+    content: ${install_script}
+
+runcmd:
+  - [/usr/local/sbin/install-docker-caddy, admin]
