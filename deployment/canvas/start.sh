@@ -5,7 +5,8 @@ cd "$(dirname "$0")"
 
 dc() { docker compose --env-file .env.canvas "$@"; }
 
-dc pull
+echo 'Pulling Canvas images (the first pull takes a few minutes)...'
+dc pull --quiet
 dc up -d --wait postgres redis
 
 # Setup is complete once both root accounts have an administrator.

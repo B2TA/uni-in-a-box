@@ -99,7 +99,8 @@ if $deploy_canvas; then
   remote "$remote_root/deployment/canvas/start.sh"
 fi
 if $deploy_pl; then
-  remote "cd $remote_root/deployment/prairielearn && docker compose pull && docker compose up -d"
+  printf 'Pulling PrairieLearn image (the first pull takes a few minutes)...\n'
+  remote "cd $remote_root/deployment/prairielearn && docker compose pull --quiet && docker compose up -d"
 fi
 
 printf 'Deployment complete:\n'

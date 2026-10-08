@@ -37,7 +37,7 @@ to pull the latest images and start Canvas:
 It runs these steps, which you can also run manually from that directory:
 
 ```bash
-docker compose --env-file .env.canvas pull
+docker compose --env-file .env.canvas pull --quiet
 docker compose --env-file .env.canvas up -d --wait postgres redis
 docker compose --env-file .env.canvas --profile init run --rm init  # fresh database only
 docker compose --env-file .env.canvas up -d web jobs
