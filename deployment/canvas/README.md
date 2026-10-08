@@ -3,31 +3,36 @@
 This Compose project runs a disposable Canvas integration-test instance with
 Canvas, delayed jobs, PostgreSQL with pgvector, and Redis.
 
-## Configure and start
+## Configure and deploy
 
 Copy the environment template and replace its placeholder values:
 
 ```bash
 cp .env.canvas.example .env.canvas
-chmod 600 .env.canvas
 ```
 
-Update `CANVAS_DOMAIN` in `.env.canvas` with the hostname that users will use
-to reach Canvas. The other files under `config/` are safe starting points for
-this test deployment.
+Set `CANVAS_DOMAIN` to the hostname users will use to reach Canvas, and point
+its DNS record at the server's Elastic IP. The files under `config/` are safe
+starting points for this test deployment. Then, from the repository root:
 
-Initialize the database and first administrator account once:
+```bash
+scripts/deploy.sh canvas
+```
+
+The first deployment initializes the database and creates the administrator
+from `CANVAS_LMS_ADMIN_EMAIL` and `CANVAS_LMS_ADMIN_PASSWORD`. Re-running it is
+safe: it skips that setup and does not reset the administrator password.
+
+The script copies files to `/opt/uni-in-a-box/deployment/canvas` on the
+server. To run the steps manually from there:
 
 ```bash
 docker compose --env-file .env.canvas up -d postgres redis
-docker compose --env-file .env.canvas --profile init run --rm init
+docker compose --env-file .env.canvas --profile init run --rm init  # fresh database only
 docker compose --env-file .env.canvas up -d web jobs
 ```
 
-The administrator credentials come from `CANVAS_LMS_ADMIN_EMAIL` and
-`CANVAS_LMS_ADMIN_PASSWORD` in `.env.canvas`.
-
-To discard the test instance and all its data:
+To discard the test instance and all its data (on the server):
 
 ```bash
 docker compose --env-file .env.canvas down -v

@@ -23,62 +23,49 @@ cp terraform.tfvars.example terraform.tfvars
 The example allows SSH from any IPv4 address (`0.0.0.0/0`). Change `admin_cidr`
 to your public IPv4 address with a `/32` mask to limit access.
 
-## Initialize and validate
+## Create the instance
 
 ```bash
-tofu fmt -check
 tofu init
-tofu validate
-tofu plan
-```
-
-`tofu plan` is the live validation step: inspect it carefully and confirm that
-the selected AWS account and proposed resources are correct.
-
-## Apply
-
-```bash
+tofu plan   # check the AWS account and resources before applying
 tofu apply
 ```
 
-## Connect to the instance
-
-After the apply completes:
-
-```bash
-tofu output -raw lms_public_ip
-ssh admin@$(tofu output -raw lms_public_ip)
-```
-
-## Instance setup
-
-On first boot, cloud-init runs `scripts/install-docker-caddy.sh`, which installs Docker Engine, Docker Compose, and Caddy. (See `cloud-init.yaml.tftpl` for full details.) The script also enables Docker and Caddy and adds the `admin` user to the `docker` group.
-
-> The script also works directly on another Debian server. Pass the user that
-> should run Docker without `sudo`: `sudo ./scripts/install-docker-caddy.sh "$USER"`
-
-Wait for cloud-init and verify the installation after connecting over SSH:
+On first boot, cloud-init runs `scripts/install-docker-caddy.sh` to install
+Docker and Caddy. Wait for it to finish:
 
 ```bash
-sudo cloud-init status --wait
-docker --version
-docker compose version
-caddy version
-systemctl is-active docker caddy
+ssh admin@$(tofu output -raw lms_public_ip) sudo cloud-init status --wait
 ```
 
-If the current SSH session started before cloud-init finished, reconnect before
-running Docker without `sudo`. Installation output is available in
-`/var/log/cloud-init-output.log`.
+If it fails, check `/var/log/cloud-init-output.log` on the instance.
 
-## LMS deployments
+## Deploy
+
+Create the config for each service you want, following its README, and point
+its DNS record at the instance IP:
 
 - [Canvas](deployment/canvas/README.md)
 - [PrairieLearn](deployment/prairielearn/README.md)
 
-Both Compose projects bind their application ports to localhost so Caddy can be
-the only public HTTP/HTTPS entry point. Canvas uses port 3000 and PrairieLearn
-uses port 3001, allowing both to run on the same EC2 instance.
+Then run:
+
+```bash
+scripts/deploy.sh both   # or: canvas, prairielearn
+```
+
+To deploy to a server not created by OpenTofu, pass `admin@host` as the second
+argument. Set that server up first with
+`sudo ./scripts/install-docker-caddy.sh "$USER"`. It replaces
+`/etc/caddy/Caddyfile`, so use a server dedicated to this project.
+
+## Teardown
+
+When you're done:
+
+```bash
+tofu destroy
+```
 
 ## Extra setup
 

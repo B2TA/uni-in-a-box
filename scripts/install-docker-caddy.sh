@@ -52,6 +52,11 @@ apt-get install -y \
   docker-ce-cli \
   docker-compose-plugin
 
+# scripts/deploy.sh writes one site file per service into /etc/caddy/sites.
+mkdir -p /etc/caddy/sites
+printf 'import /etc/caddy/sites/*.caddy\n' > /etc/caddy/Caddyfile
+
 systemctl enable --now docker
-systemctl enable --now caddy
+systemctl enable caddy
+systemctl restart caddy
 usermod -aG docker "$docker_user"

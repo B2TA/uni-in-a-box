@@ -27,7 +27,6 @@ instances. Create a Google OAuth client before starting the service:
 
    ```bash
    cp config.example.json config.json
-   chmod 600 config.json
    openssl rand -hex 32
    openssl rand -hex 32
    ```
@@ -68,28 +67,21 @@ in `/home/admin/.ssh/config`.
 If the key directory is elsewhere, set `PRAIRIELEARN_SSH_DIR` before running
 Compose.
 
-## Start PrairieLearn
+## Deploy PrairieLearn
 
-From this directory, start the service:
+After configuring `config.json`, point the hostname's DNS record at the server's
+Elastic IP, then run this from the repository root:
 
 ```bash
-docker compose pull
-docker compose up -d
-docker compose ps
+scripts/deploy.sh prairielearn
 ```
 
-The image is large, so its first download can take a few minutes. The default
-binding is `127.0.0.1:3001`; it is not exposed directly to the internet. Point
-the hostname's DNS record at the EC2 Elastic IP, then add this site to the
-host's Caddyfile:
+The image is large, so the first deployment can take a few minutes.
+PrairieLearn listens on `127.0.0.1:3001` and is reachable only through Caddy.
+On the server, the files are in `/opt/uni-in-a-box/deployment/prairielearn`,
+where the commands below should be run.
 
-```caddyfile
-pl.example.com {
-    reverse_proxy 127.0.0.1:3001
-}
-```
-
-After reloading Caddy, verify PrairieLearn's documented health endpoint:
+Verify PrairieLearn's documented health endpoint:
 
 ```bash
 curl --fail https://pl.example.com/pl/webhooks/ping
